@@ -1,5 +1,10 @@
 # Impulse Analyzer
 
+![GitHub top language](https://img.shields.io/github/languages/top/almarazj/impulse-analyzer) 
+![GitHub repo size](https://img.shields.io/github/repo-size/almarazj/impulse-analyzer)
+![License](https://img.shields.io/github/license/almarazj/impulse-analyzer)
+![GitHub Repo stars](https://img.shields.io/github/stars/almarazj/impulse-analyzer)
+
 Impulse Analyzer is a Python-based application for analyzing impulse responses and sine sweeps. It provides a graphical user interface (GUI) built with PyQt5 and integrates audio processing and visualization features.
 
 ## Features
