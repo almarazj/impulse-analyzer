@@ -9,8 +9,8 @@ from PyQt5.QtWidgets import (
     QPushButton, QRadioButton, QLineEdit, QComboBox, QCheckBox, QTabWidget,
     QWidget, QTableWidget, QHeaderView, QFileDialog, QFrame, QScrollArea, QMessageBox)
 
-from src.utils.audio_utils import import_ir, cut_ir
-from src.utils.plots import plot_ir
+from src.utils.audio_utils import import_ir, cut_ir, AudioData
+from src.utils.plots import plot_ir, placeholder_plot
 
 
 class ImpulseAnalyzrGUI(QMainWindow):
@@ -18,6 +18,8 @@ class ImpulseAnalyzrGUI(QMainWindow):
         super().__init__()
         self.setWindowTitle("ImpulseAnalyzr")
         self.setMinimumSize(1100, 600)
+        self.resize(1200, 800)
+        
         
         self.config = config
         self.OCTAVE_BANDS = config["frequency_bands"]["octave"]
@@ -27,13 +29,6 @@ class ImpulseAnalyzrGUI(QMainWindow):
         self.SMOOTHING_OPTIONS = config["combos"]["smoothing"]
         self.COLUMN_WIDTH = config["column_width"]
 
-        # Initialize variables
-        self.audio_len = None
-        self.stereo = None
-        self.fs = None
-        self.audio_data = None
-        self.audio_data_L = None
-        self.audio_data_R = None
 
         # Main layout
         self.central_widget = QWidget()
@@ -85,7 +80,9 @@ class ImpulseAnalyzrGUI(QMainWindow):
 
         self.ir_channel_layout = QHBoxLayout()
         self.ch_left = QRadioButton("Left Channel")
+        self.ch_left.toggled.connect(self.select_left_channel)
         self.ch_right = QRadioButton("Right Channel")
+        self.ch_right.toggled.connect(self.select_right_channel)
         self.ir_channel_layout.addWidget(self.ch_left)
         self.ir_channel_layout.addWidget(self.ch_right)
         self.tab_ir_layout.addLayout(self.ir_channel_layout)
@@ -143,6 +140,7 @@ class ImpulseAnalyzrGUI(QMainWindow):
         self.window_length_layout.addWidget(self.window_length_input)
         self.options_layout.addLayout(self.window_length_layout, 2, 1)
         
+        
         # Left Panel: Actions
         self.actions_frame = QFrame()
         self.actions_frame.setFrameShape(QFrame.StyledPanel)
@@ -164,7 +162,8 @@ class ImpulseAnalyzrGUI(QMainWindow):
         self.plot_frame.setFrameShape(QFrame.StyledPanel)
         self.plot_frame.setMinimumHeight(300)
         self.right_panel.addWidget(self.plot_frame, stretch=1)
-        self.init_placeholder_plot()
+        self.figure, self.canvas = placeholder_plot(self.plot_frame)
+
 
         # Right Panel: Table Area
         self.table_widget = QTableWidget(8, len(self.OCTAVE_BANDS) + 1)
@@ -184,67 +183,6 @@ class ImpulseAnalyzrGUI(QMainWindow):
         for row in range(self.table_widget.rowCount()):
             table_height += self.table_widget.rowHeight(row)
         self.table_widget.setFixedHeight(table_height)
-
-    def showEvent(self, event):
-        super().showEvent(event)
-        self.set_column_behavior()
-
-
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self.set_column_behavior()
-        self.resize_plot()
-    
-        
-    def resize_plot(self):
-        if hasattr(self, 'canvas') and self.canvas is not None:
-            self.figure.tight_layout()
-            self.canvas.draw()
-        
-        
-    def browse_ir_file(self):
-        file_name, _ = QFileDialog.getOpenFileName(self, "Open Impulse Response File", "", "All Files (*)")
-        if not file_name:
-            return
-        try:
-            self.ir_name_input.setText(file_name)
-            self.audio_len, self.stereo, self.fs, self.audio_data, self.audio_data_L, self.audio_data_R = import_ir(file_name)
-
-            # Update the GUI with file details
-            self.file_label.setText(f"File Name: {os.path.basename(file_name)}")
-            self.fs_label.setText(f"Sample Rate: {self.fs} Hz")
-            self.ch_label.setText(f"Number of Channels: {self.stereo + 1}")
-            self.len_label.setText(f"File Duration: {round(self.audio_len, 2)} s")
-
-            # Plot the IR
-            plot_ir(self.figure, self.fs, self.audio_data, self.audio_data_L, self.audio_data_R)
-
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to load file: {str(e)}")
-
-
-    def browse_ss_file(self):
-        file_name, _ = QFileDialog.getOpenFileName(self, "Open Sine Sweep File", "", "All Files (*)")
-        if file_name:
-            self.ss_name_input.setText(file_name)        
-       
-       
-    def init_placeholder_plot(self):
-        self.figure = Figure()
-        self.canvas = FigureCanvas(self.figure)
-
-        layout = QVBoxLayout(self.plot_frame)
-        layout.addWidget(self.canvas)
-
-        ax = self.figure.add_subplot(111)
-        ax.plot([0, 1, 2, 3], [0, 1, 0, 1], label="Placeholder Line")
-        ax.set_title("Placeholder Plot")
-        ax.set_xlabel("X-axis")
-        ax.set_ylabel("Y-axis")
-        ax.legend()
-        
-        self.figure.tight_layout()
-        self.canvas.draw()       
         
         
     def set_column_behavior(self):
@@ -270,7 +208,59 @@ class ImpulseAnalyzrGUI(QMainWindow):
             
         self.table_widget.setColumnCount(len(headers))
         self.table_widget.setHorizontalHeaderLabels(headers)
+        self.set_column_behavior()    
+
+
+    def showEvent(self, event):
+        super().showEvent(event)
         self.set_column_behavior()
+
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.set_column_behavior()
+        self.resize_plot()
+    
+        
+    def resize_plot(self):
+        if hasattr(self, 'canvas') and self.canvas is not None:
+            self.figure.tight_layout()
+            self.canvas.draw()
+        
+        
+    def browse_ir_file(self):
+        file_name, _ = QFileDialog.getOpenFileName(self, "Open Impulse Response File", "", "All Files (*)")
+        if not file_name:
+            return
+        try:
+            self.ir_name_input.setText(file_name)
+            self.audio_data = import_ir(file_name)
+
+            self.file_label.setText(f"File Name: {os.path.basename(file_name)}")
+            self.fs_label.setText(f"Sample Rate: {self.audio_data.sample_rate} Hz")
+            self.ch_label.setText(f"Number of Channels: {1 if self.audio_data.is_stereo else 2}")
+            self.len_label.setText(f"File Duration: {round(self.audio_data.duration, 2)} s")
+
+            plot_ir(self.figure, self.audio_data)
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to load file: {str(e)}")
+
+
+    def browse_ss_file(self):
+        file_name, _ = QFileDialog.getOpenFileName(self, "Open Sine Sweep File", "", "All Files (*)")
+        if file_name:
+            self.ss_name_input.setText(file_name)        
+       
+
+    def select_left_channel(self):
+        if self.ch_left.isChecked() and self.audio_data:
+            plot_ir(self.figure, self.audio_data, channel="L")
+    
+    
+    def select_right_channel(self):
+        if self.ch_right.isChecked() and self.audio_data:
+            plot_ir(self.figure, self.audio_data, channel="R")
 
 
 if __name__ == "__main__":
