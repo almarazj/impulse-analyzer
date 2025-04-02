@@ -1,0 +1,16 @@
+{
+    "frequency_bands": {
+        "octave": ["31.5 Hz", "63 Hz", "125 Hz", "250 Hz", "500 Hz", "1 kHz", "2 kHz", "4 kHz", "8 kHz", "16 kHz"],
+        "third_octave": [
+            "25 Hz", "31.5 Hz", "40 Hz", "50 Hz", "63 Hz", "80 Hz", "100 Hz", "125 Hz", "160 Hz", "200 Hz",
+            "250 Hz", "315 Hz", "400 Hz", "500 Hz", "630 Hz", "800 Hz", "1 kHz", "1.25 kHz", "1.6 kHz",
+            "2 kHz", "2.5 kHz", "3.15 kHz", "4 kHz", "5 kHz", "6.3 kHz", "8 kHz", "10 kHz", "12.5 kHz", "16 kHz"
+        ]
+    },
+    "parameters": ["T20", "T30", "C50", "C80", "TT", "EDT", "EDTT", "IACC"],
+    "combos": {
+        "filter": ["Octave Bands", "Third Octave Bands"],
+        "smoothing": ["Moving Median Avg.", "Schroeder"]
+    },
+    "column_width": 60
+}
