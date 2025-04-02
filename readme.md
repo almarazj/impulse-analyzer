@@ -26,7 +26,7 @@ This project uses [Poetry](https://python-poetry.org/) for dependency management
 1. Clone the repository:
 
     ```bash
-   git clone https://github.com/your-username/impulse-analyzer.git
+   git clone https://github.com/almarazj/impulse-analyzer.git
    cd impulse-analyzer
     ```
 
