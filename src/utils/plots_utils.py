@@ -5,7 +5,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from PyQt5.QtWidgets import QVBoxLayout
 
 
-def plot_ir(figure, audio_data: AudioData, channel = None) -> None:
+def plot_ir(figure: Figure, audio_data: AudioData, channel = None) -> None:
     """
     Plot the impulse response (IR) on the given Matplotlib figure.
 
@@ -27,8 +27,7 @@ def plot_ir(figure, audio_data: AudioData, channel = None) -> None:
             ax.plot(time, audio_data.left_channel, label="Left Channel")
             ax.plot(time, audio_data.right_channel, label="Right Channel")
         else:
-            ax.plot(time, audio_data, label="Mono IR")
-    
+            ax.plot(time, audio_data.raw_data, label="Mono IR")
 
     ax.set_title("Impulse Response")
     ax.set_xlabel("Time [s]")
@@ -39,22 +38,19 @@ def plot_ir(figure, audio_data: AudioData, channel = None) -> None:
     figure.canvas.draw()
 
 
-def placeholder_plot(plot_frame):
+def placeholder_plot(plot_frame: FigureCanvas) -> tuple:
     """
     Set up a placeholder plot in the given plot frame.
 
     Args:
         plot_frame: The QFrame where the plot will be embedded.
     """
-    # Create the Matplotlib figure and canvas
     figure = Figure()
     canvas = FigureCanvas(figure)
 
-    # Add the canvas to the plot frame
     layout = QVBoxLayout(plot_frame)
     layout.addWidget(canvas)
 
-    # Create the placeholder plot
     ax = figure.add_subplot(111)
     ax.plot([0, 1, 2, 3], [0, 1, 0, 1], label="Placeholder Line")
     ax.set_title("Placeholder Plot")
@@ -62,7 +58,6 @@ def placeholder_plot(plot_frame):
     ax.set_ylabel("Y-axis")
     ax.legend()
 
-    # Apply tight layout and draw the canvas
     figure.tight_layout()
     canvas.draw()
 
