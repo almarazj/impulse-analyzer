@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import (
     QWidget, QTableWidget, QHeaderView, QFileDialog, QFrame, QScrollArea, QMessageBox)
 
 from src.utils.audio_utils import import_ir, cut_ir, AudioData
-from src.utils.plots import plot_ir, placeholder_plot
+from src.utils.plots_utils import plot_ir, placeholder_plot
 
 
 class ImpulseAnalyzrGUI(QMainWindow):

@@ -38,6 +38,7 @@ def plot_ir(figure, audio_data: AudioData, channel = None) -> None:
 
     figure.canvas.draw()
 
+
 def placeholder_plot(plot_frame):
     """
     Set up a placeholder plot in the given plot frame.
