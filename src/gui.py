@@ -20,44 +20,59 @@ class ImpulseAnalyzrGUI(QMainWindow):
         self.setMinimumSize(1100, 600)
         self.resize(1200, 800)
         
-        
         self.config = config
-        self.OCTAVE_BANDS = config["frequency_bands"]["octave"]
-        self.THIRD_OCTAVE_BANDS = config["frequency_bands"]["third_octave"]
-        self.PARAMETERS = config["parameters"]
-        self.FILTER_OPTIONS = config["combos"]["filter"]
-        self.SMOOTHING_OPTIONS = config["combos"]["smoothing"]
-        self.COLUMN_WIDTH = config["column_width"]
+        self.load_config_parameters()
+        self.audio_data = None
+        self.last_directory = ""
+        
+        self.setup_ui()
+        self.setup_connections()
+        
+        
+    def load_config_parameters(self):
+        """Extract parameters from config."""
+        self.OCTAVE_BANDS = self.config["frequency_bands"]["octave"]
+        self.THIRD_OCTAVE_BANDS = self.config["frequency_bands"]["third_octave"]
+        self.PARAMETERS = self.config["parameters"]
+        self.FILTER_OPTIONS = self.config["combos"]["filter"]
+        self.SMOOTHING_OPTIONS = self.config["combos"]["smoothing"]
+        self.COLUMN_WIDTH = self.config["column_width"]
 
 
-        # Main layout
+    def setup_ui(self):
+        """Set up the UI components."""
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         self.main_layout = QHBoxLayout(self.central_widget)
-
-
-        # Left Panel
+        
+        self.setup_left_panel()
+        self.setup_right_panel()
+        
+        
+    def setup_left_panel(self):
+        """Set up the left panel of the GUI."""
         self.left_panel = QVBoxLayout()
         self.left_panel_widget = QWidget()
         self.left_panel_widget.setLayout(self.left_panel)
         self.left_panel_widget.setFixedWidth(300)
         self.main_layout.addWidget(self.left_panel_widget)
-
-
-        # Right Panel
-        self.right_panel = QVBoxLayout()
-        self.right_panel_widget = QWidget()
-        self.right_panel_widget.setLayout(self.right_panel)
-        self.main_layout.addWidget(self.right_panel_widget, stretch=3)
-
-
-        # Left Panel: Logo
+        
+        self.setup_logo()
+        self.setup_import_tabs()
+        self.setup_options_panel()
+        self.setup_actions_panel()
+        
+    
+    def setup_logo(self):
+        """Set up the logo in the left panel."""
         self.logo_label = QLabel()
         pixmap = QPixmap("res/u3f.png").scaled(280, 90, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.logo_label.setPixmap(pixmap)
         self.left_panel.addWidget(self.logo_label)
 
 
+    def setup_import_tabs(self):
+        """Set up the import tabs in the left panel."""
         # Left Panel: Tabs for Import
         self.tab_widget = QTabWidget()
         self.tab_ir = QWidget()
@@ -65,24 +80,26 @@ class ImpulseAnalyzrGUI(QMainWindow):
         self.tab_widget.addTab(self.tab_ir, "Import IR")
         self.tab_widget.addTab(self.tab_ss, "Import SS")
         self.left_panel.addWidget(self.tab_widget)
-
-
+        
+        self.setup_import_ir_tab()
+        self.setup_import_ss_tab()
+        
+    
+    def setup_import_ir_tab(self):
+        """Set up the Import IR tab."""
         # Tab: Import Impulse Response
         self.tab_ir_layout = QVBoxLayout(self.tab_ir)
         self.ir_file_layout = QHBoxLayout()
         self.ir_name_input = QLineEdit()
         self.ir_name_input.setPlaceholderText("Select file...")
         self.browse_ir_button = QPushButton("Browse...")
-        self.browse_ir_button.clicked.connect(self.browse_ir_file)
         self.ir_file_layout.addWidget(self.ir_name_input)
         self.ir_file_layout.addWidget(self.browse_ir_button)
         self.tab_ir_layout.addLayout(self.ir_file_layout)
 
         self.ir_channel_layout = QHBoxLayout()
         self.ch_left = QRadioButton("Left Channel")
-        self.ch_left.toggled.connect(self.select_left_channel)
         self.ch_right = QRadioButton("Right Channel")
-        self.ch_right.toggled.connect(self.select_right_channel)
         self.ir_channel_layout.addWidget(self.ch_left)
         self.ir_channel_layout.addWidget(self.ch_right)
         self.tab_ir_layout.addLayout(self.ir_channel_layout)
@@ -97,18 +114,21 @@ class ImpulseAnalyzrGUI(QMainWindow):
         self.tab_ir_layout.addWidget(self.len_label)
 
 
+    def setup_import_ss_tab(self):
+        """Set up the Import Sine Sweep tab."""
         # Tab: Import Sine Sweep
         self.tab_ss_layout = QVBoxLayout(self.tab_ss)
         self.ss_file_layout = QHBoxLayout()
         self.ss_name_input = QLineEdit()
         self.ss_name_input.setPlaceholderText("Select Sine Sweep file...")
         self.browse_ss_button = QPushButton("Browse...")
-        self.browse_ss_button.clicked.connect(self.browse_ss_file)
         self.ss_file_layout.addWidget(self.ss_name_input)
         self.ss_file_layout.addWidget(self.browse_ss_button)
         self.tab_ss_layout.addLayout(self.ss_file_layout)
 
-
+    
+    def setup_options_panel(self):
+        """Set up the options panel in the left panel."""
         # Left Panel: Options
         self.options_frame = QFrame()
         self.options_frame.setFrameShape(QFrame.StyledPanel)
@@ -118,7 +138,6 @@ class ImpulseAnalyzrGUI(QMainWindow):
         self.filter_label = QLabel("Filter:")
         self.filter_combo = QComboBox()
         self.filter_combo.addItems(self.FILTER_OPTIONS)
-        self.filter_combo.currentIndexChanged.connect(self.update_table_headers)
         self.options_layout.addWidget(self.filter_label, 0, 0)
         self.options_layout.addWidget(self.filter_combo, 0, 1)
 
@@ -141,6 +160,8 @@ class ImpulseAnalyzrGUI(QMainWindow):
         self.options_layout.addLayout(self.window_length_layout, 2, 1)
         
         
+    def setup_actions_panel(self):
+        """Set up the actions panel in the left panel."""
         # Left Panel: Actions
         self.actions_frame = QFrame()
         self.actions_frame.setFrameShape(QFrame.StyledPanel)
@@ -157,6 +178,20 @@ class ImpulseAnalyzrGUI(QMainWindow):
         self.actions_layout.addWidget(self.copy_button)
 
 
+    def setup_right_panel(self):
+        """Set up the right panel of the GUI."""
+        # Right Panel
+        self.right_panel = QVBoxLayout()
+        self.right_panel_widget = QWidget()
+        self.right_panel_widget.setLayout(self.right_panel)
+        self.main_layout.addWidget(self.right_panel_widget, stretch=3)
+        
+        self.setup_plot_area()
+        self.setup_table_area()
+    
+    
+    def setup_plot_area(self):
+        """Set up the plot area in the right panel."""       
         # Right Panel: Plot Area
         self.plot_frame = QFrame()
         self.plot_frame.setFrameShape(QFrame.StyledPanel)
@@ -165,6 +200,8 @@ class ImpulseAnalyzrGUI(QMainWindow):
         self.figure, self.canvas = placeholder_plot(self.plot_frame)
 
 
+    def setup_table_area(self):
+        """Set up the table area in the right panel."""
         # Right Panel: Table Area
         self.table_widget = QTableWidget(8, len(self.OCTAVE_BANDS) + 1)
         self.table_widget.setHorizontalHeaderLabels(["Param."] + self.OCTAVE_BANDS)
@@ -176,8 +213,123 @@ class ImpulseAnalyzrGUI(QMainWindow):
         self.scroll_area.setWidget(self.table_widget)
         self.scroll_area.setFixedHeight(self.table_widget.height())
         self.right_panel.addWidget(self.scroll_area)
+    
+    
+    # CONNECTIONS
+    def setup_connections(self):
+        """Set up signal-slot connections."""
+        # File browsing
+        self.browse_ir_button.clicked.connect(self.on_browse_ir_clicked)
+        self.browse_ss_button.clicked.connect(self.on_browse_ss_clicked)
         
+        # Channel selection
+        self.ch_left.toggled.connect(self.on_channel_toggled)
+        self.ch_right.toggled.connect(self.on_channel_toggled)
 
+        # Actions
+        # self.calculate_button.clicked.connect(self.on_calculate_clicked)
+        # self.clear_button.clicked.connect(self.on_clear_clicked)
+        # self.export_button.clicked.connect(self.on_export_clicked)
+        # self.copy_button.clicked.connect(self.on_copy_clicked)
+        
+        # Filter and smoothing options
+        self.filter_combo.currentIndexChanged.connect(self.on_filter_changed)
+        self.smoothing_combo.currentIndexChanged.connect(self.on_smoothing_changed)
+
+        
+    def on_browse_ir_clicked(self):
+        file_name, _ = QFileDialog.getOpenFileName(self, "Open Impulse Response File", "", "All Files (*)")
+        if not file_name:
+            return
+        try:
+            self.ir_name_input.setText(file_name)
+            self.audio_data = import_ir(file_name)
+
+            self.file_label.setText(f"File Name: {os.path.basename(file_name)}")
+            self.fs_label.setText(f"Sample Rate: {self.audio_data.sample_rate} Hz")
+            self.ch_label.setText(f"Number of Channels: {2 if self.audio_data.is_stereo else 1}")
+            self.len_label.setText(f"File Duration: {round(self.audio_data.duration, 2)} s")
+                
+            self.update_channel_buttons(self.audio_data.is_stereo)
+    
+            plot_ir(self.figure, self.audio_data)
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to load file: {str(e)}")      
+
+
+    def on_browse_ss_clicked(self):
+        file_name, _ = QFileDialog.getOpenFileName(self, "Open Sine Sweep File", "", "All Files (*)")
+        if file_name:
+            self.ss_name_input.setText(file_name) 
+
+       
+    def on_channel_toggled(self):
+        if self.ch_left.isChecked() and self.audio_data:
+            plot_ir(self.figure, self.audio_data, channel="L")
+        elif self.ch_right.isChecked() and self.audio_data:
+            plot_ir(self.figure, self.audio_data, channel="R")
+ 
+
+    def update_channel_buttons(self, is_stereo):
+        """Update the state of the channel radio buttons based on whether the file is stereo or mono."""
+        self.ch_left.setChecked(False)
+        self.ch_right.setChecked(False)
+        
+        if is_stereo:
+            self.ch_left.setDisabled(False)
+            self.ch_right.setDisabled(False)
+        else:
+            self.ch_left.setDisabled(True)
+            self.ch_right.setDisabled(True) 
+
+
+    def on_filter_changed(self):
+        selected_filter = self.filter_combo.currentText()
+        if selected_filter == "Octave Bands":
+            headers = ["Param."] + self.OCTAVE_BANDS
+        elif selected_filter == "Third Octave Bands":
+            headers = ["Param."] + self.THIRD_OCTAVE_BANDS
+            
+        self.table_widget.setColumnCount(len(headers))
+        self.table_widget.setHorizontalHeaderLabels(headers)
+        self.set_column_behavior()
+
+
+    def on_smoothing_changed(self):
+        """Update the state of Lundeby checkbox and window length input based on smoothing option."""
+        selected_smoothing = self.smoothing_combo.currentText()
+        if selected_smoothing == "Moving Median Avg.":
+            self.lundeby_checkbox.setEnabled(False)
+            self.lundeby_checkbox.setChecked(False)
+            self.window_length_input.setEnabled(True)
+        elif selected_smoothing == "Schroeder":
+            self.lundeby_checkbox.setEnabled(True)
+            self.window_length_input.setEnabled(False)
+            self.window_length_input.clear()
+        else:
+            self.lundeby_checkbox.setEnabled(True)
+            self.window_length_input.setEnabled(True)
+
+
+    # BEHAVIOR
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.set_column_behavior()
+
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.set_column_behavior()
+        self.resize_plot()
+    
+        
+    def resize_plot(self):
+        if hasattr(self, 'canvas') and self.canvas is not None:
+            self.figure.tight_layout()
+            self.canvas.draw()
+    
+    
     def set_table_height(self):
         table_height = self.table_widget.horizontalHeader().height()
         for row in range(self.table_widget.rowCount()):
@@ -197,74 +349,3 @@ class ImpulseAnalyzrGUI(QMainWindow):
                 self.table_widget.setColumnWidth(col, self.COLUMN_WIDTH)
 
         self.table_widget.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-           
-                
-    def update_table_headers(self):
-        selected_filter = self.filter_combo.currentText()
-        if selected_filter == "Octave Bands":
-            headers = ["Param."] + self.OCTAVE_BANDS
-        elif selected_filter == "Third Octave Bands":
-            headers = ["Param."] + self.THIRD_OCTAVE_BANDS
-            
-        self.table_widget.setColumnCount(len(headers))
-        self.table_widget.setHorizontalHeaderLabels(headers)
-        self.set_column_behavior()    
-
-
-    def showEvent(self, event):
-        super().showEvent(event)
-        self.set_column_behavior()
-
-
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        self.set_column_behavior()
-        self.resize_plot()
-    
-        
-    def resize_plot(self):
-        if hasattr(self, 'canvas') and self.canvas is not None:
-            self.figure.tight_layout()
-            self.canvas.draw()
-        
-        
-    def browse_ir_file(self):
-        file_name, _ = QFileDialog.getOpenFileName(self, "Open Impulse Response File", "", "All Files (*)")
-        if not file_name:
-            return
-        try:
-            self.ir_name_input.setText(file_name)
-            self.audio_data = import_ir(file_name)
-
-            self.file_label.setText(f"File Name: {os.path.basename(file_name)}")
-            self.fs_label.setText(f"Sample Rate: {self.audio_data.sample_rate} Hz")
-            self.ch_label.setText(f"Number of Channels: {1 if self.audio_data.is_stereo else 2}")
-            self.len_label.setText(f"File Duration: {round(self.audio_data.duration, 2)} s")
-
-            plot_ir(self.figure, self.audio_data)
-
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Failed to load file: {str(e)}")
-
-
-    def browse_ss_file(self):
-        file_name, _ = QFileDialog.getOpenFileName(self, "Open Sine Sweep File", "", "All Files (*)")
-        if file_name:
-            self.ss_name_input.setText(file_name)        
-       
-
-    def select_left_channel(self):
-        if self.ch_left.isChecked() and self.audio_data:
-            plot_ir(self.figure, self.audio_data, channel="L")
-    
-    
-    def select_right_channel(self):
-        if self.ch_right.isChecked() and self.audio_data:
-            plot_ir(self.figure, self.audio_data, channel="R")
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = ImpulseAnalyzrGUI()
-    window.show()
-    sys.exit(app.exec_())
